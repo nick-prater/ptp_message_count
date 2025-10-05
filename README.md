@@ -1,4 +1,4 @@
-# ptp_message_count - version 0.2
+# ptp_message_count
 
 ## Description
 
@@ -55,33 +55,39 @@ A description of all command-line options will be given by running:
 ```
 
 * -I _interface_
+
   Network interface from which to capture traffic. [required]
 
 * -a
+
   Display announce messages as they are received, rather than waiting for
   the summary results. Useful for real-time feedback on whether there are two
   fighting master clocks in a PTPv2 system. This option is off by default.
 
 * -c _count_
+
   Stop and exit after _count_ summaries have been reported. The program will
   continues forever if a value of 0 is specified, which is the default.
 
 * -i _interval_
+
   Time interval over which to capture packets between each summary report.
   The time interval must be specified in a form recognised by Go's
   _ParseDuration()_ function, e.g. `10s`, `5m`, `1h30m`. Valid time units are
-  Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". The default
-  is 5s.
+  "ns", "us" (or "µs"), "ms", "s", "m", "h". The default is 5s.
 
 * -s
+
   Summarise the source of messages, ordered by IP address. By default this is
   off as the list can be rather long in a large network without boundary
   clocks.
 
 * -v1only
+
   Monitor only PTPv1 traffic. By default all PTP traffic is monitored.
 
 * -v2only
+
   Monitor only PTPv2 traffic. By default all PTP traffic is monitored.
 
 ## Further Development
@@ -96,7 +102,7 @@ style and add features. Pull requests are welcome...
 
 ## Author
 
-Nick Prater <info@npbroadcast.com>
+Nick Prater
 
 ## Licence
 
