@@ -60,16 +60,16 @@ import (
 )
 
 /* PTP Message Types:
-	0: "Sync",
-	1: "Delay_Req",
-	2: "Pdelay_Req",
-	3: "Pdelay_Resp",
-	8: "Follow_Up",
-	9: "Delay_Resp",
-	10: "Pdelay_Resp_Follow_Up",
-	11: "Announce",
-	12: "Signalling",
-	13: "Management",
+0: "Sync",
+1: "Delay_Req",
+2: "Pdelay_Req",
+3: "Pdelay_Resp",
+8: "Follow_Up",
+9: "Delay_Resp",
+10: "Pdelay_Resp_Follow_Up",
+11: "Announce",
+12: "Signalling",
+13: "Management",
 */
 
 func main() {
@@ -276,9 +276,9 @@ func main() {
 
 			// Display rate statistics every displayInterval
 			currentTime := time.Now()
-			if currentTime.Sub(lastDisplayTime) >= displayInterval {
+			if timeElapsed := currentTime.Sub(lastDisplayTime); timeElapsed >= displayInterval {
 				summaryCount++
-				period := float64(displayInterval.Seconds())
+				period := float64(timeElapsed.Seconds())
 
 				fmt.Printf("PTP messages: %4d, %7.2f msgs/sec\n", messageCount, (float64(messageCount) / period))
 				fmt.Printf(" v1 messages: %4d, %7.2f msgs/sec\n", v1PacketCount, (float64(v1PacketCount) / period))
