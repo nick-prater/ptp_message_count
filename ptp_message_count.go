@@ -133,20 +133,9 @@ func main() {
 	listeners := startListeners(iface)
 	defer closeListeners(listeners)
 
-	// Initialise packet capture
-	pcapHandle, err := pcap.OpenLive(interfaceName, 1600, true, pcap.BlockForever)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer pcapHandle.Close()
-
-	filterString := fmt.Sprintf("udp and (port %s) and (host %s)",
-		strings.Join(intSliceToStringSlice(ptpPorts), " or port "),
-		strings.Join(ptpAddresses, " or host "))
-	err = pcapHandle.SetBPFFilter(filterString)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Iitialise packet capture
+	pcapHandle := startPacketCapture(interfaceName)
+	defer stopPacketCapture(pcapHandle)
 	packetSource := gopacket.NewPacketSource(pcapHandle, pcapHandle.LinkType())
 
 	// Variables to track PTP message counts and rates
@@ -299,6 +288,27 @@ func closeListeners(listeners []*ipv4.PacketConn) {
 	for _, listener := range listeners {
 		listener.Close()
 	}
+}
+
+func startPacketCapture(interfaceName string) *pcap.Handle {
+	pcapHandle, err := pcap.OpenLive(interfaceName, 1600, true, pcap.BlockForever)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	filterString := fmt.Sprintf("udp and (port %s) and (host %s)",
+		strings.Join(intSliceToStringSlice(ptpPorts), " or port "),
+		strings.Join(ptpAddresses, " or host "))
+	err = pcapHandle.SetBPFFilter(filterString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return pcapHandle
+}
+
+func stopPacketCapture(pcapHandle *pcap.Handle) {
+	pcapHandle.Close()
 }
 
 func intSliceToStringSlice(intSlice []int) []string {
