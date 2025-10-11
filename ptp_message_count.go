@@ -158,14 +158,6 @@ func main() {
 		// Check if packet contains UDP layer
 		udpLayer := packet.Layer(layers.LayerTypeUDP)
 		if udpLayer != nil {
-			udp, _ := udpLayer.(*layers.UDP)
-
-			// We've set a BPF filter to allow only ports 319 or 320.
-			// This is just a sanity check... which can likely be removed
-			if udp.DstPort != 319 && udp.DstPort != 320 {
-				log.Fatalf("Received packet with unexpected destination port %v\n", udp.DstPort)
-			}
-
 			applicationLayer := packet.ApplicationLayer()
 			if applicationLayer != nil {
 				payload := applicationLayer.Payload()
