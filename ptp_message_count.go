@@ -1,6 +1,6 @@
 /*
 
-ptp_message_count - version 0.2
+ptp_message_count - version 0.3
 
 == DESCRIPTION ==
 
@@ -56,8 +56,23 @@ import (
 	"net"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
+
+// PTP multicast addresses
+// alt1, alt2 and alt3 addresses are used by PTPv1 for alternate domains
+var ptpAddresses = []string{
+	"224.0.0.107", // Peer Delay Messages
+	"224.0.1.129", // General Messages
+	"224.0.1.130", // alt1
+	"224.0.1.131", // alt2
+	"224.0.1.132"} // alt3
+
+// PTP ports
+var ptpPorts = []int{
+	319, // Event Messages
+	320} // General Messages
 
 /* PTP Message Types:
 0: "Sync",
@@ -104,72 +119,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to find interface %s: %v", interfaceName, err)
 	}
+	fmt.Printf("Monitoring PTP messages on network interface %s\n", interfaceName)
+	fmt.Printf("Reporting summary statistics every %v\n", displayInterval)
 
-	// PTP multicast addresses
-	// alt1, alt2 and alt3 addresses are used by PTPv1 for alternate domains
-	generalMessageAddress := net.IPv4(224, 0, 1, 129)
-	alt1MessageAddress := net.IPv4(224, 0, 1, 130)
-	alt2MessageAddress := net.IPv4(224, 0, 1, 131)
-	alt3MessageAddress := net.IPv4(224, 0, 1, 132)
-	peerDelayMessageAddress := net.IPv4(224, 0, 0, 107)
-
-	// Join multicast groups for PTP
-	eventMessageConn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 319})
-	if err != nil {
-		log.Fatalf("Failed to create UDP connection for port 319: %v", err)
+	if v1only {
+		fmt.Println("Listening only to PTPv1 messages")
 	}
-	defer eventMessageConn.Close()
-	p1 := ipv4.NewPacketConn(eventMessageConn)
-
-	generalMessageConn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 320})
-	if err != nil {
-		log.Fatalf("Failed to create UDP connection for port 320: %v", err)
-	}
-	defer generalMessageConn.Close()
-	p2 := ipv4.NewPacketConn(generalMessageConn)
-
-	// Join multicast groups on both connections, so that traffic flows for us to capture
-	err = p1.JoinGroup(iface, &net.UDPAddr{IP: generalMessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 319: %v", generalMessageAddress, err)
-	}
-	err = p1.JoinGroup(iface, &net.UDPAddr{IP: peerDelayMessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 319: %v", peerDelayMessageAddress, err)
-	}
-	err = p1.JoinGroup(iface, &net.UDPAddr{IP: alt1MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 319: %v", alt1MessageAddress, err)
-	}
-	err = p1.JoinGroup(iface, &net.UDPAddr{IP: alt2MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 319: %v", alt2MessageAddress, err)
-	}
-	err = p1.JoinGroup(iface, &net.UDPAddr{IP: alt3MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 319: %v", alt3MessageAddress, err)
+	if v2only {
+		fmt.Println("Listening only to PTPv2 messages")
 	}
 
-	err = p2.JoinGroup(iface, &net.UDPAddr{IP: generalMessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 320: %v", generalMessageAddress, err)
-	}
-	err = p2.JoinGroup(iface, &net.UDPAddr{IP: peerDelayMessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 320: %v", peerDelayMessageAddress, err)
-	}
-	err = p2.JoinGroup(iface, &net.UDPAddr{IP: alt1MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 320: %v", alt1MessageAddress, err)
-	}
-	err = p2.JoinGroup(iface, &net.UDPAddr{IP: alt2MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 320: %v", alt2MessageAddress, err)
-	}
-	err = p2.JoinGroup(iface, &net.UDPAddr{IP: alt3MessageAddress})
-	if err != nil {
-		log.Fatalf("Failed to join multicast group %v on port 320: %v", alt3MessageAddress, err)
-	}
+	// Subscribe to PTP traffic
+	listeners := startListeners(iface)
+	defer closeListeners(listeners)
 
 	// Initialise packet capture
 	pcapHandle, err := pcap.OpenLive(interfaceName, 1600, true, pcap.BlockForever)
@@ -178,8 +140,10 @@ func main() {
 	}
 	defer pcapHandle.Close()
 
-	filterStr := "udp and (port 319 or port 320) and (host 224.0.1.129 or host 224.0.1.130 or host 224.0.1.131 or host 224.0.1.132 or host 224.0.0.107)"
-	err = pcapHandle.SetBPFFilter(filterStr)
+	filterString := fmt.Sprintf("udp and (port %s) and (host %s)",
+		strings.Join(intSliceToStringSlice(ptpPorts), " or port "),
+		strings.Join(ptpAddresses, " or host "))
+	err = pcapHandle.SetBPFFilter(filterString)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -198,21 +162,6 @@ func main() {
 		v2PacketCount   = 0
 	)
 
-	fmt.Printf("Monitoring PTP messages on network interface %s\n", interfaceName)
-	fmt.Printf("Reporting summary statistics every %v\n", displayInterval)
-	if v1only {
-		fmt.Println("Listening only to PTPv1 messages")
-	}
-	if v2only {
-		fmt.Println("Listening only to PTPv2 messages")
-	}
-	fmt.Printf(
-		"Subscribed to multicast groups %v, %v, %v, %v, %v on ports 319 and 320\n",
-		generalMessageAddress,
-		alt1MessageAddress,
-		alt2MessageAddress,
-		alt3MessageAddress,
-		peerDelayMessageAddress)
 	fmt.Println("Press Ctrl+C to stop\n")
 
 	// Process packets
@@ -305,6 +254,60 @@ func main() {
 			}
 		}
 	}
+}
+
+func startListeners(iface *net.Interface) []*ipv4.PacketConn {
+	listeners := createListeners(ptpPorts)
+
+	// Join multicast groups in each listener, so that traffic flows for us to capture
+	for _, address := range ptpAddresses {
+		ip := net.ParseIP(address)
+
+		for index, listener := range listeners {
+			err := listener.JoinGroup(iface, &net.UDPAddr{IP: ip})
+			if err != nil {
+				log.Fatalf("Failed to join multicast group %v on port %v: %v", ip, ptpPorts[index], err)
+			}
+		}
+	}
+
+	fmt.Printf(
+		"Subscribed to multicast groups %s on ports %s\n",
+		strings.Join(ptpAddresses, ", "),
+		strings.Join(intSliceToStringSlice(ptpPorts), ", "))
+
+	return listeners
+}
+
+func createListeners(ports []int) []*ipv4.PacketConn {
+	listeners := make([]*ipv4.PacketConn, 0, len(ports))
+
+	for _, port := range ports {
+		conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: port})
+		if err != nil {
+			log.Fatalf("Failed to create UDP listener for port %v : %v", port, err)
+		}
+
+		listener := ipv4.NewPacketConn(conn)
+		listeners = append(listeners, listener)
+	}
+
+	return listeners
+}
+
+func closeListeners(listeners []*ipv4.PacketConn) {
+	for _, listener := range listeners {
+		listener.Close()
+	}
+}
+
+func intSliceToStringSlice(intSlice []int) []string {
+	stringSlice := make([]string, 0, len(intSlice))
+	for _, intValue := range intSlice {
+		stringValue := fmt.Sprintf("%d", intValue)
+		stringSlice = append(stringSlice, stringValue)
+	}
+	return stringSlice
 }
 
 func summariseType(messageTypes map[uint8]int, period float64) {

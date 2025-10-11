@@ -13,7 +13,7 @@ the source addresses sending them.
 # go run ./ptp_message_count.go -I eno1 -c 1 -s
 Monitoring PTP messages on network interface eno1
 Reporting summary statistics every 5s
-Subscribed to multicast groups 224.0.1.129, 224.0.1.130, 224.0.1.131, 224.0.1.132, 224.0.0.107 on ports 319 and 320
+Subscribed to multicast groups 224.0.0.107, 224.0.1.129, 224.0.1.130, 224.0.1.131, 224.0.1.132 on ports 319, 320
 Press Ctrl+C to stop
 
 PTP messages:   40,    8.00 msgs/sec
