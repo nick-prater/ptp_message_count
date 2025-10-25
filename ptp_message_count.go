@@ -158,6 +158,7 @@ func main() {
 		startTime       = time.Now()
 		lastDisplayTime = startTime
 		messageTypes    = make(map[uint8]int)
+		domainMessages  = make(map[uint8]int)
 		sourceAddresses = make(map[string]int)
 		announceSources = make(map[string]int)
 		v1PacketCount   = 0
@@ -185,6 +186,7 @@ func main() {
 					if (filterDomain >= 0) && (int(ptpDomain) != filterDomain) {
 						continue
 					}
+					domainMessages[ptpDomain]++
 
 					if (v1only && ptpVersion != 1) || (v2only && ptpVersion != 2) {
 						continue
@@ -236,6 +238,7 @@ func main() {
 				fmt.Printf(" v2 messages: %4d, %7.2f msgs/sec\n", v2PacketCount, (float64(v2PacketCount) / period))
 
 				summariseType(messageTypes, period)
+				printDomains(domainMessages, period)
 				printAnnounceSources(announceSources)
 
 				if summariseSource {
@@ -247,6 +250,7 @@ func main() {
 				v1PacketCount = 0
 				v2PacketCount = 0
 				announceSources = make(map[string]int)
+				domainMessages = make(map[uint8]int)
 				fmt.Println()
 
 				if maxSummaries > 0 && summaryCount >= maxSummaries {
@@ -349,6 +353,23 @@ func summariseType(messageTypes map[uint8]int, period float64) {
 		count := messageTypes[msgType]
 		fmt.Printf("  Type %2d : %-10s : %5d messages, %6.2f msgs/sec\n", msgType, typeName, count, (float64(count) / period))
 		messageTypes[msgType] = 0
+	}
+}
+
+func printDomains(domainMessages map[uint8]int, period float64) {
+	fmt.Println("PTP Domains:")
+
+	keys := make([]uint8, 0, len(domainMessages))
+	for k := range domainMessages {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, domain := range keys {
+		count := domainMessages[domain]
+		fmt.Printf("  Domain %3d : %5d messages, %6.2f msgs/sec\n", domain, count, (float64(count) / period))
 	}
 }
 

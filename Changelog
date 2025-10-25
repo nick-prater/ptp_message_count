@@ -1,6 +1,7 @@
 Changelog for 1.1
   * Added `-V` flag to show version
   * Added `-d` flag to filter by PTP domain
+  * Display summary message count for each PTP domain
 
 Changelog for 1.0
   * Initial release

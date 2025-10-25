@@ -16,22 +16,24 @@ Reporting summary statistics every 5s
 Subscribed to multicast groups 224.0.0.107, 224.0.1.129, 224.0.1.130, 224.0.1.131, 224.0.1.132 on ports 319, 320
 Press Ctrl+C to stop
 
-PTP messages:   40,    8.00 msgs/sec
+PTP messages:   59,   11.49 msgs/sec
  v1 messages:    0,    0.00 msgs/sec
- v2 messages:   40,    8.00 msgs/sec
+ v2 messages:   59,   11.49 msgs/sec
 Message type:
-  Type  0 : Sync       :     5 messages,   1.00 msgs/sec
-  Type  1 : Delay_Req  :    14 messages,   2.80 msgs/sec
-  Type  8 : Follow_Up  :     5 messages,   1.00 msgs/sec
-  Type  9 : Delay_Resp :    13 messages,   2.60 msgs/sec
-  Type 11 : Announce   :     3 messages,   0.60 msgs/sec
+  Type  0 : Sync       :     5 messages,   0.97 msgs/sec
+  Type  1 : Delay_Req  :    19 messages,   3.70 msgs/sec
+  Type  8 : Follow_Up  :     5 messages,   0.97 msgs/sec
+  Type  9 : Delay_Resp :    28 messages,   5.45 msgs/sec
+  Type 11 : Announce   :     2 messages,   0.39 msgs/sec
+PTP Domains:
+  Domain   0 :    59 messages,  11.49 msgs/sec
 Announce messages received from:
   10.196.252.1
 Message source:
-  10.196.252.1    :   26 messages
-  10.196.252.2    :    3 messages
-  10.196.252.3    :    6 messages
-  10.196.252.4    :    5 messages
+  10.196.252.1    :   40 messages
+  10.196.252.2    :    5 messages
+  10.196.252.3    :    5 messages
+  10.196.252.4    :    9 messages
 
 Finished reporting after 1 summaries
 ```
