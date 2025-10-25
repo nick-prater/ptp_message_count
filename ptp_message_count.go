@@ -142,6 +142,10 @@ func main() {
 		fmt.Println("Listening only to PTPv2 messages")
 	}
 
+	if filterDomain >= 0 {
+		fmt.Printf("Listening only to messages for PTP domain %d\n", filterDomain)
+	}
+
 	// Subscribe to PTP traffic
 	listeners := startListeners(iface)
 	defer closeListeners(listeners)
