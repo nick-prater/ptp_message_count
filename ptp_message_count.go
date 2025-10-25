@@ -94,6 +94,7 @@ func main() {
 	// Command Line Arguments
 	var (
 		displayInterval      time.Duration
+		filterDomain         int
 		interfaceName        string
 		maxSummaries         int
 		showAnnounceMessages bool
@@ -104,6 +105,7 @@ func main() {
 	)
 	flag.BoolVar(&showAnnounceMessages, "a", false, "Display announce messages")
 	flag.IntVar(&maxSummaries, "c", 0, "Stop after `count` summaries have been reported. Continues forever if a value of 0 is specified (default).")
+	flag.IntVar(&filterDomain, "d", -1, "Only process messages for the specified PTP `domain` (0-255). All messages will be processed if a negative value is specified.")
 	flag.StringVar(&interfaceName, "I", "", "Network `interface` from which to capture traffic [required]")
 	flag.DurationVar(&displayInterval, "i", (5 * time.Second), "Time `interval` to capture for each summary report e.g. 1s, 5m, etc.")
 	flag.BoolVar(&summariseSource, "s", false, "Summarise source of messages, ordered by IP address")
@@ -170,10 +172,17 @@ func main() {
 			applicationLayer := packet.ApplicationLayer()
 			if applicationLayer != nil {
 				payload := applicationLayer.Payload()
-				if len(payload) >= 2 {
+				// PTP message header is 34 bytes
+				if len(payload) >= 34 {
 
 					// PTP version is the second nibble of the second byte
 					ptpVersion := (payload[1] & 0x0f)
+
+					// PTP domain 5th byte of the header
+					ptpDomain := payload[4]
+					if (filterDomain >= 0) && (int(ptpDomain) != filterDomain) {
+						continue
+					}
 
 					if (v1only && ptpVersion != 1) || (v2only && ptpVersion != 2) {
 						continue
@@ -209,7 +218,8 @@ func main() {
 							fmt.Printf("PTPv%d announce message from %v\n", ptpVersion, sourceAddress)
 						}
 					}
-
+				} else {
+					fmt.Printf("WARNING: Invalid PTP message. Expected at least 34 bytes but only %d bytes received\n", len(payload))
 				}
 			}
 

@@ -73,6 +73,11 @@ A description of all command-line options will be given by running:
   Stop and exit after _count_ summaries have been reported. The program will
   continues forever if a value of 0 is specified, which is the default.
 
+* -d domain
+
+  Only process messages for the specified PTP domain (0-255). All messages
+  will be processed if a negative value is specified, which is the default.
+
 * -i _interval_
 
   Time interval over which to capture packets between each summary report.
