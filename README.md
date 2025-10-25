@@ -58,6 +58,10 @@ A description of all command-line options will be given by running:
 
   Network interface from which to capture traffic. [required]
 
+* -V
+
+  Show _version_ and exit.
+
 * -a
 
   Display announce messages as they are received, rather than waiting for

@@ -1,6 +1,6 @@
 /*
 
-ptp_message_count - version 0.3
+ptp_message_count
 
 == DESCRIPTION ==
 
@@ -60,6 +60,8 @@ import (
 	"time"
 )
 
+const VERSION = "1.1"
+
 // PTP multicast addresses
 // alt1, alt2 and alt3 addresses are used by PTPv1 for alternate domains
 var ptpAddresses = []string{
@@ -95,6 +97,7 @@ func main() {
 		interfaceName        string
 		maxSummaries         int
 		showAnnounceMessages bool
+		showVersion          bool
 		summariseSource      bool
 		v1only               bool
 		v2only               bool
@@ -104,9 +107,15 @@ func main() {
 	flag.StringVar(&interfaceName, "I", "", "Network `interface` from which to capture traffic [required]")
 	flag.DurationVar(&displayInterval, "i", (5 * time.Second), "Time `interval` to capture for each summary report e.g. 1s, 5m, etc.")
 	flag.BoolVar(&summariseSource, "s", false, "Summarise source of messages, ordered by IP address")
+	flag.BoolVar(&showVersion, "V", false, "Display version and exit")
 	flag.BoolVar(&v1only, "v1only", false, "Monitor only PTPv1 traffic")
 	flag.BoolVar(&v2only, "v2only", false, "Monitor only PTPv2 traffic")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("ptp_message_count %s\n", VERSION)
+		os.Exit(0)
+	}
 
 	// Check mandatory arguments are provided
 	if interfaceName == "" {
