@@ -98,6 +98,7 @@ func main() {
 		interfaceName        string
 		maxSummaries         int
 		showAnnounceMessages bool
+		showHelp             bool
 		showVersion          bool
 		summariseSource      bool
 		v1only               bool
@@ -106,6 +107,7 @@ func main() {
 	flag.BoolVar(&showAnnounceMessages, "a", false, "Display announce messages")
 	flag.IntVar(&maxSummaries, "c", 0, "Stop after `count` summaries have been reported. Continues forever if a value of 0 is specified (default).")
 	flag.IntVar(&filterDomain, "d", -1, "Only process messages for the specified PTP `domain` (0-255). All messages will be processed if a negative value is specified.")
+	flag.BoolVar(&showHelp, "h", false, "Display usage summary and exit")
 	flag.StringVar(&interfaceName, "I", "", "Network `interface` from which to capture traffic [required]")
 	flag.DurationVar(&displayInterval, "i", (5 * time.Second), "Time `interval` to capture for each summary report e.g. 1s, 5m, etc.")
 	flag.BoolVar(&summariseSource, "s", false, "Summarise source of messages, ordered by IP address")
@@ -120,7 +122,7 @@ func main() {
 	}
 
 	// Check mandatory arguments are provided
-	if interfaceName == "" {
+	if interfaceName == "" || showHelp {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

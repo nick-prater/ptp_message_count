@@ -78,6 +78,10 @@ A description of all command-line options will be given by running:
   Only process messages for the specified PTP domain (0-255). All messages
   will be processed if a negative value is specified, which is the default.
 
+* -h
+
+  Display usage summary and exit.
+
 * -i _interval_
 
   Time interval over which to capture packets between each summary report.
