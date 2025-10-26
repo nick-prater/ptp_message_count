@@ -1,3 +1,6 @@
+Changelog for 1.2
+  * Added `-F` flag to specify additional BPF filter on input
+
 Changelog for 1.1
   * Added `-V` flag to show version
   * Added `-d` flag to filter by PTP domain

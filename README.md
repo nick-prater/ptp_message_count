@@ -60,6 +60,10 @@ A description of all command-line options will be given by running:
 
   Network interface from which to capture traffic. [required]
 
+* -F _BPF filter string_
+
+  Apply an additional _BPF filter string_ to input. For example `-F \"src 10.0.0.1\"` will process only messages from ip address 10.0.0.1.
+
 * -V
 
   Show _version_ and exit.

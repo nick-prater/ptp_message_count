@@ -60,7 +60,7 @@ import (
 	"time"
 )
 
-const VERSION = "1.1"
+const VERSION = "1.2"
 
 // PTP multicast addresses
 // alt1, alt2 and alt3 addresses are used by PTPv1 for alternate domains
@@ -97,6 +97,7 @@ func main() {
 		filterDomain         int
 		interfaceName        string
 		maxSummaries         int
+        packetFilter         string
 		showAnnounceMessages bool
 		showHelp             bool
 		showVersion          bool
@@ -108,6 +109,7 @@ func main() {
 	flag.IntVar(&maxSummaries, "c", 0, "Stop after `count` summaries have been reported. Continues forever if a value of 0 is specified (default).")
 	flag.IntVar(&filterDomain, "d", -1, "Only process messages for the specified PTP `domain` (0-255). All messages will be processed if a negative value is specified.")
 	flag.BoolVar(&showHelp, "h", false, "Display usage summary and exit")
+	flag.StringVar(&packetFilter, "F", "", "Apply an additional `BPF filter string` to input. For example `-F \"src 10.0.0.1\"` will process only messages from ip address 10.0.0.1")
 	flag.StringVar(&interfaceName, "I", "", "Network `interface` from which to capture traffic [required]")
 	flag.DurationVar(&displayInterval, "i", (5 * time.Second), "Time `interval` to capture for each summary report e.g. 1s, 5m, etc.")
 	flag.BoolVar(&summariseSource, "s", false, "Summarise source of messages, ordered by IP address")
@@ -151,7 +153,7 @@ func main() {
 	defer closeListeners(listeners)
 
 	// Iitialise packet capture
-	pcapHandle := startPacketCapture(interfaceName)
+	pcapHandle := startPacketCapture(interfaceName, packetFilter)
 	defer stopPacketCapture(pcapHandle)
 	packetSource := gopacket.NewPacketSource(pcapHandle, pcapHandle.LinkType())
 
@@ -311,7 +313,7 @@ func closeListeners(listeners []*ipv4.PacketConn) {
 	}
 }
 
-func startPacketCapture(interfaceName string) *pcap.Handle {
+func startPacketCapture(interfaceName string, packetFilter string) *pcap.Handle {
 	pcapHandle, err := pcap.OpenLive(interfaceName, 1600, true, pcap.BlockForever)
 	if err != nil {
 		log.Fatal(err)
@@ -320,9 +322,15 @@ func startPacketCapture(interfaceName string) *pcap.Handle {
 	filterString := fmt.Sprintf("udp and (port %s) and (host %s)",
 		strings.Join(intSliceToStringSlice(ptpPorts), " or port "),
 		strings.Join(ptpAddresses, " or host "))
+    if len(packetFilter) > 0 {
+        fmt.Printf("Applying additional BPF filter: %s\n", packetFilter)
+        filterString = fmt.Sprintf("%s and (%s)", filterString, packetFilter)
+    }
+
 	err = pcapHandle.SetBPFFilter(filterString)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+        log.Fatalf("filter string: \"%s\"", filterString)
 	}
 
 	return pcapHandle
