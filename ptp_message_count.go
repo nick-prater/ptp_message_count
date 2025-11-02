@@ -46,6 +46,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/google/gopacket"
@@ -60,7 +62,7 @@ import (
 	"time"
 )
 
-const VERSION = "1.2"
+const VERSION = "1.3"
 
 // PTP multicast addresses
 // alt1, alt2 and alt3 addresses are used by PTPv1 for alternate domains
@@ -89,6 +91,13 @@ var ptpPorts = []int{
 13: "Management",
 */
 
+type ptpAnnounce struct {
+	p1                  uint8
+	p2                  uint8
+	grandmasterIdentity []byte
+	stepsRemoved        uint16
+}
+
 func main() {
 
 	// Command Line Arguments
@@ -97,7 +106,7 @@ func main() {
 		filterDomain         int
 		interfaceName        string
 		maxSummaries         int
-        packetFilter         string
+		packetFilter         string
 		showAnnounceMessages bool
 		showHelp             bool
 		showVersion          bool
@@ -225,7 +234,18 @@ func main() {
 					if msgType == 11 {
 						announceSources[sourceAddress.String()]++
 						if showAnnounceMessages {
-							fmt.Printf("PTPv%d announce message from %v\n", ptpVersion, sourceAddress)
+							announce, err := decodeAnnounceMessage(payload)
+							if err == nil {
+								fmt.Printf("PTPv%d announce message from %-15v  GM:%x p1:%-3d p2:%-3d steps:%-2d\n",
+									ptpVersion,
+									sourceAddress,
+									announce.grandmasterIdentity,
+									announce.p1,
+									announce.p2,
+									announce.stepsRemoved)
+							} else {
+								fmt.Println(err)
+							}
 						}
 					}
 				} else {
@@ -322,15 +342,15 @@ func startPacketCapture(interfaceName string, packetFilter string) *pcap.Handle 
 	filterString := fmt.Sprintf("udp and (port %s) and (host %s)",
 		strings.Join(intSliceToStringSlice(ptpPorts), " or port "),
 		strings.Join(ptpAddresses, " or host "))
-    if len(packetFilter) > 0 {
-        fmt.Printf("Applying additional BPF filter: %s\n", packetFilter)
-        filterString = fmt.Sprintf("%s and (%s)", filterString, packetFilter)
-    }
+	if len(packetFilter) > 0 {
+		fmt.Printf("Applying additional BPF filter: %s\n", packetFilter)
+		filterString = fmt.Sprintf("%s and (%s)", filterString, packetFilter)
+	}
 
 	err = pcapHandle.SetBPFFilter(filterString)
 	if err != nil {
 		log.Println(err)
-        log.Fatalf("filter string: \"%s\"", filterString)
+		log.Fatalf("filter string: \"%s\"", filterString)
 	}
 
 	return pcapHandle
@@ -429,6 +449,24 @@ func printSourceSummary(sourceAddresses map[string]int) {
 		fmt.Printf("  %-15s : %4d messages\n", address, count)
 		sourceAddresses[address] = 0
 	}
+}
+
+func decodeAnnounceMessage(payload []byte) (ptpAnnounce, error) {
+
+	minBytes := 64
+	if len(payload) < minBytes {
+		err := errors.New(fmt.Sprintf("Invalid announce message. Expected minimum %d bytes, got %d", minBytes, len(payload)))
+		return ptpAnnounce{}, err
+	}
+
+	steps := binary.BigEndian.Uint16(payload[61:63])
+
+	return ptpAnnounce{
+			p1:                  payload[47],
+			p2:                  payload[52],
+			grandmasterIdentity: payload[53:61],
+			stepsRemoved:        steps},
+		nil
 }
 
 // getPTPMessageTypeName returns the name of a PTP message type

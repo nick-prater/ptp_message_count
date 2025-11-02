@@ -70,9 +70,12 @@ A description of all command-line options will be given by running:
 
 * -a
 
-  Display announce messages as they are received, rather than waiting for
-  the summary results. Useful for real-time feedback on whether there are two
-  fighting master clocks in a PTPv2 system. This option is off by default.
+  Display announce messages as they are received, with key parameters extracted.
+  Useful for real-time feedback on whether there are fighting master clocks in a
+  PTPv2 system. This option is off by default.
+
+  Example output:
+  `PTPv2 announce message from 10.196.252.1     GM:803428fffe1f65c6 p1:128 p2:128 steps:0`
 
 * -c _count_
 
