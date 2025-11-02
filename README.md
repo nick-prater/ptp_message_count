@@ -75,7 +75,9 @@ A description of all command-line options will be given by running:
   PTPv2 system. This option is off by default.
 
   Example output:
-  `PTPv2 announce message from 10.196.252.1     GM:803428fffe1f65c6 p1:128 p2:128 steps:0`
+````
+PTPv2 announce message from 10.196.252.1     GM:803428fffe1f65c6 p1:128 p2:128 steps:0
+````
 
 * -c _count_
 
